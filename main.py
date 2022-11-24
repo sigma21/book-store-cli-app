@@ -1,5 +1,5 @@
 import typer
-from database import connect, get_users, add_user, get_books, add_book
+from database import connect, get_users, add_user, get_books, add_book, remove_book
 from rich.console import Console
 from rich.table import Table
 
@@ -48,6 +48,12 @@ def addbook():
     genre = input("Genre of the book: ")
     add_book(name, author, page, genre)
     typer.echo(f"Book successfully added!")
+
+@app.command("removebook")
+def removebook():
+    id = input("Enter the id of the book you want to remove: ")
+    remove_book(id)
+    typer.echo(f"Book removed successfully!")
 
 @app.command("books")
 def books():

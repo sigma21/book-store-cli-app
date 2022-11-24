@@ -106,3 +106,15 @@ def add_book(name, author, page, genre):
     curr.execute(f'INSERT INTO public."Book"(name, author, page, genre) VALUES (\'{name}\', \'{author}\', {int(page)}, \'{genre}\')')
     curr.close()
     conn.close()
+
+def remove_book(id):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute(f'DELETE FROM public."Book" WHERE id = {int(id)}')
+    curr.close()
+    conn.close()
