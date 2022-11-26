@@ -122,7 +122,7 @@ def is_book_available(book_id):
     available_books = cur.fetchall()
     return len(available_books) > 0
 
-def most_read_10():
+def most_read_books():
     cur.execute(f'SELECT book_id, count(*) as count FROM public."User_Book" WHERE reading_status = \'read\' GROUP BY book_id, username ORDER BY count DESC LIMIT 10')
     most_read_books = cur.fetchall()
     most_read_book_ids = list(zip(*most_read_books))[0]
