@@ -1,5 +1,5 @@
 import typer
-from database import connect, get_users, add_user, get_books, add_book, remove_book
+from database import connect, get_users, add_user, get_books, add_book, search_book
 from rich.console import Console
 from rich.table import Table
 
@@ -49,12 +49,6 @@ def addbook():
     add_book(name, author, page, genre)
     typer.echo(f"Book successfully added!")
 
-@app.command("removebook")
-def removebook():
-    id = input("Enter the id of the book you want to remove: ")
-    remove_book(id)
-    typer.echo(f"Book removed successfully!")
-
 @app.command("books")
 def books():
     books = get_books()
@@ -67,7 +61,23 @@ def books():
     table.add_column("Genre", style="dim", min_width=10, justify=True)
 
     for idx, book in enumerate(books, start=1):
-        print(book)
+        table.add_row(str(idx), str(book[0]), book[1], book[2], str(book[3]), book[4])
+
+    console.print(table)
+
+@app.command("searchbook")
+def searchbook():
+    name = input("Please enter the name of the book you want to search:")
+    books = search_book(name)
+    table = Table(show_header=True, header_style="bold blue")
+    table.add_column("#", style="dim", width=10)
+    table.add_column("Book ID", style="dim", min_width=10, justify=True)
+    table.add_column("Book", style="dim", min_width=10, justify=True)
+    table.add_column("Author", style="dim", min_width=10, justify=True)
+    table.add_column("Pages", style="dim", min_width=10, justify=True)
+    table.add_column("Genre", style="dim", min_width=10, justify=True)
+
+    for idx, book in enumerate(books, start=1):
         table.add_row(str(idx), str(book[0]), book[1], book[2], str(book[3]), book[4])
 
     console.print(table)

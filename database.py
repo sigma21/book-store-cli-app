@@ -1,6 +1,7 @@
 import psycopg2
 
 def connect():
+    conn = None
     try:
         try:
             # try to connect to database
@@ -47,7 +48,7 @@ def connect():
             curr.close()  
 
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)      
+        print("Please starts Postgres server in your computer to connect to DB!")      
     finally: 
         if conn is not None:
             conn.close()
@@ -80,7 +81,21 @@ def add_user(user):
     curr.execute(f'INSERT INTO public."Users"(username) VALUES (\'{user}\')')
     curr.close()
     conn.close()
-    
+
+def search_book(name):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute(f'SELECT * FROM public."Book" WHERE name = \'{name}\'')
+    books = curr.fetchall()
+    curr.close()
+    conn.close()
+    return books
+
 def get_books():
     conn = psycopg2.connect(
             host="localhost",
@@ -104,17 +119,5 @@ def add_book(name, author, page, genre):
     conn.autocommit = True
     curr = conn.cursor()
     curr.execute(f'INSERT INTO public."Book"(name, author, page, genre) VALUES (\'{name}\', \'{author}\', {int(page)}, \'{genre}\')')
-    curr.close()
-    conn.close()
-
-def remove_book(id):
-    conn = psycopg2.connect(
-            host="localhost",
-            database="bookstore",
-            user="postgres",
-            password="postgres")
-    conn.autocommit = True
-    curr = conn.cursor()
-    curr.execute(f'DELETE FROM public."Book" WHERE id = {int(id)}')
     curr.close()
     conn.close()
