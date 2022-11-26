@@ -9,31 +9,31 @@ app = typer.Typer()
 
 @app.command("start")
 def start():
-    typer.echo(f"Welcome to Book Store!")
-    typer.echo(f"You can execute command 'help' to see possible commands")
+    typer.echo(f"Welcome to Library CLI!")
+    typer.echo(f"You can execute command 'help' to see the possible commands")
     connect()
 
 @app.command("help")
 def help():
     typer.echo(f"Here are the possible commands:")
     for command in app.registered_commands:
-        print(command.name)
+        print("-", command.name)
 
 @app.command("signup")
 def signup():
     typer.echo(f"Nice that you are signing up!")
-    username = input("Please enter your username:")
+    username = input("Please enter your username: ")
     users = get_users()
     while username in users:
         print("This username already exists!")
-        username = input("Please enter another username:")
+        username = input("Please enter another username: ")
     add_user(username)
     print("Successfully signed up!")
 
 @app.command("signin")
 def signin():
     typer.echo(f"Let's sign in!")
-    name = input("Please enter your username:")
+    name = input("Please enter your username: ")
     users = get_users()
     if name in users:
         print("This username doesn't exist. Please sign up!")
@@ -44,7 +44,7 @@ def addbook():
     typer.echo(f"Please enter the required book info to add!")
     name = input("Book name: ")
     author = input("Author: ")
-    page = input("Number of pages :")
+    page = input("Number of the pages: ")
     genre = input("Genre of the book: ")
     add_book(name, author, page, genre)
     typer.echo(f"Book successfully added!")
@@ -67,7 +67,7 @@ def books():
 
 @app.command("searchbook")
 def searchbook():
-    name = input("Please enter the name of the book you want to search:")
+    name = input("Please enter the name of the book you want to search: ")
     books = search_book(name)
     table = Table(show_header=True, header_style="bold blue")
     table.add_column("#", style="dim", width=10)
@@ -82,6 +82,5 @@ def searchbook():
 
     console.print(table)
     
-
 if __name__ == "__main__":
     app()
