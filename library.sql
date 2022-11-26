@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS public."Book"
 CREATE TABLE IF NOT EXISTS public."Users"
 (
     username character varying,
-    password character varying,
     PRIMARY KEY (username)
 );
 

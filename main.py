@@ -8,8 +8,6 @@ console = Console()
 
 app = typer.Typer()
 
-curr_user = None
-
 @app.command("start")
 def start():
     typer.echo(f"Welcome to Library CLI!")
@@ -23,33 +21,15 @@ def sign_up(username: str):
     while username in usernames:
         print("This username already exists!")
         username = input("Please enter another username: ")
-    password = input("Please enter your password: ")
-    database.add_user(username, password)
-    global curr_user
-    curr_user = username
+    database.add_user(username)
     print("Successfully signed up!")
-
-@app.command("sign_in")
-def sign_in(username: str):
-    usernames = database.get_usernames()
-    if username not in usernames:
-        print("This username doesn't exist. Please sign up!")
-        return
-    typer.echo(f"Let's sign in!")
-    correct_password = database.get_password(username)
-    password = input("Please enter your password: ")
-    while correct_password != password:
-        password = input("Wrong password! Please enter again: ")
-    global curr_user
-    curr_user = username
-    print("Successfully signed in!")
 
 @app.command("add_book")
 def add_book():
     typer.echo(f"Please enter the required book info to add!")
     name = input("Name: ")
     author = input("Author: ")
-    page = input("# Pages: ")
+    page = int(input("# Pages: "))
     genre = input("Genre: ")
     database.add_book(name, author, page, genre)
     typer.echo(f"Book successfully added!")
@@ -102,59 +82,59 @@ def most_read_genres():
     print("Most read 5 genres:", most_read_genres)
 
 @app.command("borrow_book")
-def borrow_book(book_id: str):
+def borrow_book(book_id: int, username: str):
     # get book availability
     available = database.is_book_available(book_id)
     if available:
-        database.borrow_book(curr_user, book_id)
-        typer.echo("You borrowed book " + book_id)
+        database.borrow_book(username, book_id)
+        typer.echo("You borrowed book " + str(book_id))
     else:
         typer.echo(f"Sorry, this book is not available! Try again later.")
 
 @app.command("return_book")
-def return_book(book_id: str):
-    borrowed = database.is_borrowed(curr_user, book_id)
+def return_book(book_id: int, username: str):
+    borrowed = database.is_borrowed(username, book_id)
     if not borrowed:
-        typer.echo("Sorry, you didn't borrow book " + book_id)
+        typer.echo("Sorry, you didn't borrow book " + str(book_id))
     else:
-        database.return_book(curr_user, book_id)
-        typer.echo("You returned book " + book_id)
+        database.return_book(username, book_id)
+        typer.echo("You returned book " + str(book_id))
 
 @app.command("mark_read")
-def mark_read(book_id: str):
-    database.mark_read(curr_user, book_id)
-    print("You marked book", book_id, "as read")
+def mark_read(book_id: int, username: str):
+    database.mark_read(username, book_id)
+    print("You marked book", str(book_id), "as read")
 
 @app.command("mark_reading")
-def mark_reading(book_id: str):
-    database.mark_reading(curr_user, book_id)
-    print("You marked book", book_id, "as reading")
+def mark_reading(book_id: int, username: str):
+    database.mark_reading(username, book_id)
+    print("You marked book", str(book_id), "as reading")
 
 @app.command("mark_will_read")
-def mark_will_read(book_id: str):
-    database.mark_will_read(curr_user, book_id)
-    print("You marked book", book_id, "as will read")
+def mark_will_read(book_id: int, username: str):
+    database.mark_will_read(username, book_id)
+    print("You marked book", str(book_id), "as will read")
 
 @app.command("fav_book")
-def fav_book(book_id: str):
-    database.add_fav(curr_user, book_id)
-    print("You added book", book_id, "to your favorites")
+def fav_book(book_id: int, username: str):
+    database.add_fav(username, book_id)
+    print("You added book", str(book_id), "to your favorites")
 
 @app.command("my_books")
-def my_books():
-    read_books = database.get_books_read(curr_user)
+def my_books(username: str):
+    read_books = database.get_books_read(username)
     typer.echo(f"Books you read:")
     display_book_table(read_books)
-    reading_books = database.get_books_reading(curr_user)
+    reading_books = database.get_books_reading(username)
     typer.echo(f"Books you are reading:")
     display_book_table(reading_books)
-    will_read_books = database.get_books_will_read(curr_user)
+    will_read_books = database.get_books_will_read(username)
     typer.echo(f"Books you will read:")
     display_book_table(will_read_books)
 
 @app.command("statistics")
-def statistics():
-    read_books = database.get_books_read(curr_user)
+def statistics(username: str):
+    read_books = database.get_books_read(username)
     typer.echo(f"Number of books you read: " + read_books.size())
 
 def display_book_table(books):
@@ -167,12 +147,11 @@ def display_book_table(books):
     table.add_column("Genre", style="dim", min_width=10, justify=True)
     table.add_column("Availability", style="dim", min_width=10, justify=True)
 
-    availability = False
-    if book[5] < book[6]:
-        availability = True
-
     for idx, book in enumerate(books, start=1):
-        table.add_row(str(idx), str(book[0]), book[1], book[2], str(book[3]), book[4], availability)
+        availability = False
+        if book[5] <= book[6]:
+            availability = True
+        table.add_row(str(idx), str(book[0]), book[1], book[2], str(book[3]), book[4], str(availability))
 
     console.print(table)
 
