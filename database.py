@@ -207,4 +207,4 @@ def borrow_book(id):
     conn.autocommit = True
     curr = conn.cursor()
     book = get_book_by_id(id)
-    curr.execute(f'UPDATE public."Book" SET available_quantity = {book[4]} WHERE id = {id})')
+    curr.execute(f'UPDATE public."Book" SET available_quantity = {book[4] - 1} WHERE id = {id})')
