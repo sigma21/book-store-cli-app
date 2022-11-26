@@ -53,7 +53,7 @@ def connect():
         if conn is not None:
             conn.close()
 
-def get_users():
+def get_usernames():
     conn = psycopg2.connect(
             host="localhost",
             database="bookstore",
@@ -70,7 +70,7 @@ def get_users():
     conn.close()
     return usernames
 
-def add_user(user):
+def get_password(username):
     conn = psycopg2.connect(
             host="localhost",
             database="bookstore",
@@ -78,11 +78,25 @@ def add_user(user):
             password="postgres")
     conn.autocommit = True
     curr = conn.cursor()
-    curr.execute(f'INSERT INTO public."Users"(username) VALUES (\'{user}\')')
+    curr.execute('SELECT password FROM public."Users" WHERE username = \'{username}\'')
+    password = curr.fetchone()
+    curr.close()
+    conn.close()
+    return password
+
+def add_user(username, password):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute(f'INSERT INTO public."Users"(username, password) VALUES (\'{username}\', \'{password}\')')
     curr.close()
     conn.close()
 
-def search_book(name):
+def search_book_by_name(name):
     conn = psycopg2.connect(
             host="localhost",
             database="bookstore",
@@ -95,6 +109,48 @@ def search_book(name):
     curr.close()
     conn.close()
     return books
+
+def search_book_by_author(author):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute(f'SELECT * FROM public."Book" WHERE author = \'{author}\'')
+    books = curr.fetchall()
+    curr.close()
+    conn.close()
+    return books
+
+def search_book_by_name_and_author(name, author):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute(f'SELECT * FROM public."Book" WHERE name = \'{name}\' and author = \'{author}\'')
+    books = curr.fetchall()
+    curr.close()
+    conn.close()
+    return books
+
+def get_book_by_id(id):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute(f'SELECT * FROM public."Book" WHERE id = {id}')
+    book = curr.fetchone()
+    curr.close()
+    conn.close()
+    return book
 
 def get_books():
     conn = psycopg2.connect(
@@ -110,6 +166,20 @@ def get_books():
     conn.close()
     return books
 
+def get_recent_books():
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute('SELECT * FROM public."Book" SORT BY date_added DESC LIMIT 10')
+    books = curr.fetchall()
+    curr.close()
+    conn.close()
+    return books
+
 def add_book(name, author, page, genre):
     conn = psycopg2.connect(
             host="localhost",
@@ -118,6 +188,23 @@ def add_book(name, author, page, genre):
             password="postgres")
     conn.autocommit = True
     curr = conn.cursor()
-    curr.execute(f'INSERT INTO public."Book"(name, author, page, genre) VALUES (\'{name}\', \'{author}\', {int(page)}, \'{genre}\')')
+    existing = search_book_by_name_and_author(name, author)
+    if len(existing) == 0:
+        curr.execute(f'''INSERT INTO public."Book"(name, author, page, genre, available_quantity, total_quantity) 
+            VALUES (\'{name}\', \'{author}\', {int(page)}, \'{genre}\', 1, 1)''')
+    else:
+        curr.execute(f'''INSERT INTO public."Book"(name, author, page, genre, available_quantity, total_quantity) 
+            VALUES (\'{name}\', \'{author}\', {int(page)}, \'{genre}\', {existing[0][4] + 1}, {existing[0][5] + 1})''')
     curr.close()
     conn.close()
+
+def borrow_book(id):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    book = get_book_by_id(id)
+    curr.execute(f'UPDATE public."Book" SET available_quantity = {book[4] - 1} WHERE id = {id})')

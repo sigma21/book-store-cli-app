@@ -10,12 +10,16 @@ CREATE TABLE IF NOT EXISTS public."Book"
     author character varying,
     page integer,
     genre character varying,
+    available_quantity integer,
+    total_quantity integer,
+    date_added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS public."User"
 (
     username character varying,
+    password character varying,
     fav_authors character varying[],
     PRIMARY KEY (username)
 );
