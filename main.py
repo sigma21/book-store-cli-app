@@ -39,7 +39,7 @@ def sign_in(username: str):
     correct_password = database.get_password(username)
     password = input("Please enter your password: ")
     while correct_password != password:
-        print("Wrong password! Please enter again: ")
+        password = input("Wrong password! Please enter again: ")
     global curr_user
     curr_user = username
     print("Successfully signed in!")
