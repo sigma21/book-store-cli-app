@@ -53,7 +53,7 @@ def connect():
         if conn is not None:
             conn.close()
 
-def get_users():
+def get_usernames():
     conn = psycopg2.connect(
             host="localhost",
             database="bookstore",
@@ -70,7 +70,7 @@ def get_users():
     conn.close()
     return usernames
 
-def add_user(user, password):
+def get_password(username):
     conn = psycopg2.connect(
             host="localhost",
             database="bookstore",
@@ -78,7 +78,21 @@ def add_user(user, password):
             password="postgres")
     conn.autocommit = True
     curr = conn.cursor()
-    curr.execute(f'INSERT INTO public."Users"(username, password) VALUES (\'{user}\', \'{password}\')')
+    curr.execute('SELECT password FROM public."Users" WHERE username = \'{username}\'')
+    password = curr.fetchone()
+    curr.close()
+    conn.close()
+    return password
+
+def add_user(username, password):
+    conn = psycopg2.connect(
+            host="localhost",
+            database="bookstore",
+            user="postgres",
+            password="postgres")
+    conn.autocommit = True
+    curr = conn.cursor()
+    curr.execute(f'INSERT INTO public."Users"(username, password) VALUES (\'{username}\', \'{password}\')')
     curr.close()
     conn.close()
 
@@ -193,5 +207,4 @@ def borrow_book(id):
     conn.autocommit = True
     curr = conn.cursor()
     book = get_book_by_id(id)
-    curr.execute(f'''UPDATE public."Book" SET available_quantity = {book[4]}, total_quantity = {book[5]}
-        WHERE id = {id})''')
+    curr.execute(f'UPDATE public."Book" SET available_quantity = {book[4]} WHERE id = {id})')
