@@ -5,7 +5,7 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS public."Book"
 (
-    id serial,
+    book_id serial,
     name character varying,
     author character varying,
     page integer,
@@ -13,36 +13,38 @@ CREATE TABLE IF NOT EXISTS public."Book"
     available_quantity integer,
     total_quantity integer,
     date_added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY (book_id)
 );
 
-CREATE TABLE IF NOT EXISTS public."User"
+CREATE TABLE IF NOT EXISTS public."Users"
 (
     username character varying,
     password character varying,
-    fav_authors character varying[],
     PRIMARY KEY (username)
 );
 
 CREATE TABLE IF NOT EXISTS public."User_Book"
 (
-    book serial,
-    "user" character varying,
-    read boolean,
-    fav boolean
+    id serial,
+    book_id integer,
+    username character varying,
+    reading_status character varying,
+    is_fav boolean,
+    borrowed_amount integer,
+    PRIMARY KEY (id)
 );
 
 ALTER TABLE IF EXISTS public."User_Book"
-    ADD FOREIGN KEY (book)
-    REFERENCES public."Book" (id) MATCH SIMPLE
+    ADD FOREIGN KEY (book_id)
+    REFERENCES public."Book" (book_id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public."User_Book"
-    ADD FOREIGN KEY ("user")
-    REFERENCES public."User" (username) MATCH SIMPLE
+    ADD FOREIGN KEY (username)
+    REFERENCES public."Users" (username) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
