@@ -128,7 +128,7 @@ def most_read_books():
     most_read_book_ids = list(zip(*most_read_books))[0]
     return most_read_book_ids
 
-def most_read_10_by_genre(genre):
+def most_read_books_by_genre(genre):
     cur.execute(f'''SELECT book_id, count(*) as count FROM public."User_Book" INNER JOIN public."Book" ON book_id WHERE reading_status = \'read\' 
         AND genre = \'{genre}\' GROUP BY book_id, username ORDER BY count DESC LIMIT 10''')
     most_read_books = cur.fetchall()
