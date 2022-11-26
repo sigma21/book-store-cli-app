@@ -32,7 +32,7 @@ def sign_up(username: str):
 @app.command("sign_in")
 def sign_in(username: str):
     usernames = database.get_usernames()
-    if username in usernames:
+    if username not in usernames:
         print("This username doesn't exist. Please sign up!")
         return
     typer.echo(f"Let's sign in!")
@@ -167,8 +167,12 @@ def display_book_table(books):
     table.add_column("Genre", style="dim", min_width=10, justify=True)
     table.add_column("Availability", style="dim", min_width=10, justify=True)
 
+    availability = False
+    if book[5] < book[6]:
+        availability = True
+
     for idx, book in enumerate(books, start=1):
-        table.add_row(str(idx), str(book[0]), book[1], book[2], str(book[3]), book[4], book[5])
+        table.add_row(str(idx), str(book[0]), book[1], book[2], str(book[3]), book[4], availability)
 
     console.print(table)
 
