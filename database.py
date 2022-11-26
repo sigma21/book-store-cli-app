@@ -48,7 +48,7 @@ def connect():
             curr.close()  
 
     except (Exception, psycopg2.DatabaseError) as error:
-        print("Please starts Postgres server in your computer to connect to DB!")      
+        print("Please start PostgreSQL server in your computer to connect to Library DB!")      
     finally: 
         if conn is not None:
             conn.close()
