@@ -148,25 +148,107 @@ def is_borrowed(username, book_id):
     borrowed_books = cur.fetchall()
     return len(borrowed_books) > 0
 
+def mark_status(username, book_id, status):
+    cur = connect()
+    user_book = search_user_book(username, book_id)
+    if user_book is None:
+        cur.execute(f'INSERT INTO public."User_Book"(book_id, username, reading_status) VALUES (\'{book_id}\', \'{username}\', \'{status}\')')
+    else:
+        cur.execute(f'UPDATE public."User_Book" SET reading_status = \'{status}\' WHERE book_id = {book_id} AND username = \'{username}\'')
+
+def add_fav(username, book_id):
+    cur = connect()
+    user_book = search_user_book(username, book_id)
+    if user_book is None:
+        cur.execute(f'INSERT INTO public."User_Book"(book_id, username, is_fav) VALUES (\'{book_id}\', \'{username}\', true)')
+    else:
+        cur.execute(f'UPDATE public."User_Book" SET is_fav = true WHERE id = {user_book[0]}')
+        
+def get_books_with_status(username, status):
+    cur = connect()
+    cur.execute(f'SELECT book_id FROM public."User_Book" WHERE username = \'{username}\' AND reading_status = \'{status}\'')
+    book_ids = cur.fetchall()
+    books = get_books_by_ids(book_ids)
+    return books
+
+def get_fav_books(username):
+    cur = connect()
+    cur.execute(f'SELECT book_id FROM public."User_Book" WHERE username = \'{username}\' AND is_fav is true')
+    book_ids = cur.fetchall()
+    books = get_books_by_ids(book_ids)
+    return books
+
+def get_books_by_ids(ids):
+    cur = connect()
+    books = []
+    for id in ids:
+        cur.execute(f'SELECT * FROM public."Book" WHERE book_id = {int(id[0])}')
+        book = cur.fetchone() 
+        books.append(book)
+    return books
+
 def most_read_books():
     cur = connect()
     cur.execute(f'SELECT book_id, count(*) as count FROM public."User_Book" WHERE reading_status = \'read\' GROUP BY book_id, username ORDER BY count DESC LIMIT 10')
     most_read_books = cur.fetchall()
-    most_read_book_ids = list(zip(*most_read_books))[0]
-    return most_read_book_ids
+    books = get_books_by_ids(most_read_books)
+    return books
 
 def most_read_books_by_genre(genre):
     cur = connect()
-    cur.execute(f'''SELECT book_id, count(*) as count FROM public."User_Book" INNER JOIN public."Book" ON book_id WHERE reading_status = \'read\' 
-        AND genre = \'{genre}\' GROUP BY book_id, username ORDER BY count DESC LIMIT 10''')
+    cur.execute(f'''SELECT book.book_id, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE reading_status = \'read\' 
+        AND genre = \'{genre}\' GROUP BY book.book_id, user_book.username ORDER BY count DESC LIMIT 10''')
     most_read_books = cur.fetchall()
-    most_read_book_ids = list(zip(*most_read_books))[0]
-    return most_read_book_ids
+    books = get_books_by_ids(most_read_books)
+    return books
+
+def most_favorite():
+    cur = connect()
+    cur.execute(f'SELECT book_id, count(*) as count FROM public."User_Book" WHERE is_fav IS true GROUP BY book_id, username ORDER BY count DESC LIMIT 10')
+    most_fav_books = cur.fetchall()
+    books = get_books_by_ids(most_fav_books)
+    return books
+
+def most_favorite_by_genre(genre):
+    cur = connect()
+    cur.execute(f'''SELECT book.book_id, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE is_fav IS true 
+        AND genre = \'{genre}\' GROUP BY book.book_id, user_book.username ORDER BY count DESC LIMIT 10''')
+    most_fav_books = cur.fetchall()
+    books = get_books_by_ids(most_fav_books)
+    return books
 
 def most_read_genres():
     cur = connect()
-    cur.execute(f'''SELECT genre, count(*) as count FROM public."User_Book" INNER JOIN public."Book" ON book_id WHERE reading_status = read 
-        GROUP BY book_id, username, genre ORDER BY count DESC LIMIT 10''')
+    cur.execute(f'''SELECT book.genre, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE user_book.reading_status = \'read\' 
+        GROUP BY user_book.book_id, user_book.username, book.genre ORDER BY count DESC LIMIT 5''')
     most_read = cur.fetchall()
-    most_read_genres = list(zip(*most_read))[0]
+    most_read_genres = []
+    for genre in most_read:
+        most_read_genres.append(genre[0])
     return most_read_genres
+
+def most_read_authors():
+    cur = connect()
+    cur.execute(f'''SELECT book.author, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE user_book.reading_status = \'read\' 
+        GROUP BY user_book.book_id, user_book.username, book.author ORDER BY count DESC LIMIT 3''')
+    most_read = cur.fetchall()
+    most_read_authors = []
+    for author in most_read:
+        most_read_authors.append(author[0])
+    return most_read_authors
+
+def get_statistics(username):
+    cur = connect()
+    cur.execute(f'''WITH read_books_by_user AS (SELECT DISTINCT book.book_id AS book_id FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE 
+        user_book.reading_status = \'read\' AND username = \'{username}\') SELECT COUNT(*) FROM read_books_by_user''')
+    number_of_books = cur.fetchone()[0]
+    cur.execute(f'''WITH read_books_by_user AS (SELECT DISTINCT book.author AS author FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE 
+        user_book.reading_status = \'read\' AND username = \'{username}\') SELECT COUNT(*) FROM read_books_by_user''')
+    number_of_authors = cur.fetchone()[0]
+    cur.execute(f'''WITH read_books_by_user AS (SELECT DISTINCT book.genre AS genre FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE 
+        user_book.reading_status = \'read\' AND username = \'{username}\') SELECT COUNT(*) FROM read_books_by_user''')    
+    number_of_genres = cur.fetchone()[0]
+    cur.execute(f'''WITH read_books_by_user AS (SELECT book.page AS page FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE 
+        user_book.reading_status = \'read\' AND username = \'{username}\') SELECT SUM(page) FROM read_books_by_user''')  
+    total_pages = cur.fetchone()[0]
+    return number_of_books, number_of_authors, number_of_genres, total_pages

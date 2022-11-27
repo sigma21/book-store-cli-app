@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public."User_Book"
     username character varying,
     reading_status character varying,
     is_fav boolean default false,
-    borrowed_amount integer,
+    borrowed_amount integer default 0,
     PRIMARY KEY (id)
 );
 
