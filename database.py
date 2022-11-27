@@ -127,7 +127,7 @@ def borrow_book(username, book_id):
     if user_book is None:
         cur.execute(f'INSERT INTO public."User_Book"(book_id, username, borrowed_amount) VALUES (\'{book_id}\', \'{username}\', 1)')
     else:
-        cur.execute(f'UPDATE public."User_Book" SET borrowed_amount = {user_book[5] + 1} WHERE id = {user_book[0]})')
+        cur.execute(f'UPDATE public."User_Book" SET borrowed_amount = {user_book[5] + 1} WHERE id = {user_book[0]}')
     
 def return_book(username, book_id):
     cur = connect()
@@ -187,55 +187,58 @@ def get_books_by_ids(ids):
         books.append(book)
     return books
 
+def get_books_and_count_by_ids(ids):
+    cur = connect()
+    books = []
+    for id in ids:
+        cur.execute(f'SELECT * FROM public."Book" WHERE book_id = {int(id[0])}')
+        book = cur.fetchone() 
+        books.append((book, id[1]))
+    return books
+
 def most_read_books():
     cur = connect()
-    cur.execute(f'SELECT book_id, count(*) as count FROM public."User_Book" WHERE reading_status = \'read\' GROUP BY book_id, username ORDER BY count DESC LIMIT 10')
+    cur.execute(f'SELECT book_id, count(*) as count FROM public."User_Book" WHERE reading_status = \'read\' GROUP BY book_id ORDER BY count DESC LIMIT 10')
     most_read_books = cur.fetchall()
-    books = get_books_by_ids(most_read_books)
+    books = get_books_and_count_by_ids(most_read_books)
     return books
 
 def most_read_books_by_genre(genre):
     cur = connect()
     cur.execute(f'''SELECT book.book_id, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE reading_status = \'read\' 
-        AND genre = \'{genre}\' GROUP BY book.book_id, user_book.username ORDER BY count DESC LIMIT 10''')
+        AND genre = \'{genre}\' GROUP BY book.book_id ORDER BY count DESC LIMIT 10''')
     most_read_books = cur.fetchall()
-    books = get_books_by_ids(most_read_books)
+    books = get_books_and_count_by_ids(most_read_books)
     return books
 
 def most_favorite():
     cur = connect()
-    cur.execute(f'SELECT book_id, count(*) as count FROM public."User_Book" WHERE is_fav IS true GROUP BY book_id, username ORDER BY count DESC LIMIT 10')
+    cur.execute(f'SELECT book_id, count(*) as count FROM public."User_Book" WHERE is_fav IS true GROUP BY book_id ORDER BY count DESC LIMIT 10')
     most_fav_books = cur.fetchall()
-    books = get_books_by_ids(most_fav_books)
+    books = get_books_and_count_by_ids(most_fav_books)
     return books
 
 def most_favorite_by_genre(genre):
     cur = connect()
     cur.execute(f'''SELECT book.book_id, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE is_fav IS true 
-        AND genre = \'{genre}\' GROUP BY book.book_id, user_book.username ORDER BY count DESC LIMIT 10''')
+        AND genre = \'{genre}\' GROUP BY book.book_id ORDER BY count DESC LIMIT 10''')
     most_fav_books = cur.fetchall()
-    books = get_books_by_ids(most_fav_books)
+    books = get_books_and_count_by_ids(most_fav_books)
     return books
 
 def most_read_genres():
     cur = connect()
     cur.execute(f'''SELECT book.genre, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE user_book.reading_status = \'read\' 
-        GROUP BY user_book.book_id, user_book.username, book.genre ORDER BY count DESC LIMIT 5''')
+        GROUP BY book.genre ORDER BY count DESC LIMIT 5''')
     most_read = cur.fetchall()
-    most_read_genres = []
-    for genre in most_read:
-        most_read_genres.append(genre[0])
-    return most_read_genres
+    return most_read
 
 def most_read_authors():
     cur = connect()
     cur.execute(f'''SELECT book.author, count(*) as count FROM public."User_Book" as user_book INNER JOIN public."Book" as book ON user_book.book_id = book.book_id WHERE user_book.reading_status = \'read\' 
-        GROUP BY user_book.book_id, user_book.username, book.author ORDER BY count DESC LIMIT 3''')
+        GROUP BY book.author ORDER BY count DESC LIMIT 3''')
     most_read = cur.fetchall()
-    most_read_authors = []
-    for author in most_read:
-        most_read_authors.append(author[0])
-    return most_read_authors
+    return most_read
 
 def get_statistics(username):
     cur = connect()
