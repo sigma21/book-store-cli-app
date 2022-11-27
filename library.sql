@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS public."Book"
     author character varying,
     page integer,
     genre character varying,
-    available_quantity integer,
-    total_quantity integer,
+    available_quantity integer default 1,
+    total_quantity integer default 1,
     date_added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (book_id)
 );
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public."User_Book"
     book_id integer,
     username character varying,
     reading_status character varying,
-    is_fav boolean,
+    is_fav boolean default false,
     borrowed_amount integer,
     PRIMARY KEY (id)
 );

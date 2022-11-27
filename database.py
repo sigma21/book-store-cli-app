@@ -88,12 +88,6 @@ def get_book_by_id(book_id):
     book = cur.fetchone()
     return book
 
-def get_books():
-    cur = connect()
-    cur.execute('SELECT * FROM public."Book"')
-    books = cur.fetchall()
-    return books
-
 def get_recent_books():
     cur = connect()
     cur.execute('SELECT * FROM public."Book" ORDER BY date_added DESC LIMIT 5')
@@ -110,8 +104,8 @@ def add_book(name, author, page, genre):
     cur = connect()
     existing = search_book_by_name_and_author(name, author)
     if len(existing) == 0:
-        cur.execute(f'''INSERT INTO public."Book"(name, author, page, genre, available_quantity, total_quantity) 
-            VALUES (\'{name}\', \'{author}\', {page}, \'{genre}\', 1, 1)''')
+        cur.execute(f'''INSERT INTO public."Book"(name, author, page, genre) 
+            VALUES (\'{name}\', \'{author}\', {page}, \'{genre}\')''')
     else:
         cur.execute(f'''UPDATE public."Book" SET available_quantity = {int(existing[0][5]) + 1},
             total_quantity = {int(existing[0][6]) + 1} WHERE book_id = {int(existing[0][0])}''')
@@ -128,25 +122,31 @@ def search_user_book(username, book_id):
 def borrow_book(username, book_id):
     cur = connect()
     book = get_book_by_id(book_id)
-    print(username)
     cur.execute(f'UPDATE public."Book" SET available_quantity = {int(book[5]) - 1} WHERE book_id = {book_id}')
     user_book = search_user_book(username, book_id)
     if user_book is None:
-        cur.execute(f'INSERT INTO public."User_Book"(book_id, username) VALUES (\'{book_id}\', \'{username}\')')
+        cur.execute(f'INSERT INTO public."User_Book"(book_id, username, borrowed_amount) VALUES (\'{book_id}\', \'{username}\', 1)')
     else:
         cur.execute(f'UPDATE public."User_Book" SET borrowed_amount = {user_book[5] + 1} WHERE id = {user_book[0]})')
-
+    
 def return_book(username, book_id):
     cur = connect()
     book = get_book_by_id(book_id)
-    cur.execute(f'UPDATE public."Book" SET available_quantity = {int(book[5]) + 1} WHERE book_id = {book_id})')
-    # add info that this user returned this book
+    cur.execute(f'UPDATE public."Book" SET available_quantity = {int(book[5]) + 1} WHERE book_id = {book_id}')
+    user_book = search_user_book(username, book_id)
+    cur.execute(f'UPDATE public."User_Book" SET borrowed_amount = {user_book[5] - 1} WHERE id = {user_book[0]}')
 
 def is_book_available(book_id):
     cur = connect()
     cur.execute(f'SELECT * FROM public."Book" WHERE book_id = {book_id} AND available_quantity > 0')
     available_books = cur.fetchall()
     return len(available_books) > 0
+
+def is_borrowed(username, book_id):
+    cur = connect()
+    cur.execute(f'SELECT * FROM public."User_Book" WHERE book_id = {book_id} AND username = \'{username}\' AND borrowed_amount > 0')
+    borrowed_books = cur.fetchall()
+    return len(borrowed_books) > 0
 
 def most_read_books():
     cur = connect()
